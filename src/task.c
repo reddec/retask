@@ -9,8 +9,8 @@
 #include <string.h>
 #include <sys/wait.h>
 #include <sys/prctl.h>
-#include "../include/utils.h"
-#include "../include/task.h"
+#include "utils.h"
+#include "task.h"
 
 int __run_app(const task_t *task, int stdin_file, int stdout_file);
 

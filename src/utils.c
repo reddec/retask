@@ -8,7 +8,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <errno.h>
-#include "../include/utils.h"
+#include "utils.h"
 
 char *find_executable(const char *bin_dir) {
   DIR *dirp;
