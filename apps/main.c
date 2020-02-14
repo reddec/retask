@@ -90,7 +90,7 @@ int main(int argc, char *argv[]) {
     switch (opt) {
     case 'r': {
       requeue_sec = strtol(optarg, NULL, 10);
-      if ((requeue_sec > 0&& requeue_sec < LONG_MAX) || errno == EINVAL || errno == ERANGE) {
+      if ((requeue_sec > 0 && requeue_sec < LONG_MAX) || errno == EINVAL || errno == ERANGE) {
         fprintf(stderr, "invalid value for requeue interval: %s\n", optarg);
         usage();
         exit(EXIT_FAILURE);
@@ -108,8 +108,11 @@ int main(int argc, char *argv[]) {
   }
 
   worker_t worker;
-  worker_init(&worker, location);
-  int ret = launch(&worker, requeue_sec);
+  int ret = worker_init(&worker, location);
+  if (ret != 0) {
+    return EXIT_FAILURE;
+  }
+  ret = launch(&worker, requeue_sec);
   worker_destroy(&worker);
   return ret;
 }
