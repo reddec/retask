@@ -21,43 +21,34 @@ int task_init(task_t *task, const worker_t *worker, const char *task_name) {
   memset(task, 0, sizeof(*task));
   task->name = strdup(task_name);
   if (!task->name) {
-    fprintf(stderr, "retask: task %s initialization failed (allocate name): %s\n", task_name, strerror(errno));
+    fprintf(stderr, "retask: task %s init failed (allocate name): %s\n", task_name, strerror(errno));
     task_destroy(task);
     return -2;
   }
   task->file = filepath_join(worker->tasks_dir, task_name);
   if (!task->file) {
-    fprintf(stderr,
-            "retask: task %s initialization failed (allocate task file path): %s\n",
-            task_name,
-            strerror(errno));
+    fprintf(stderr, "retask: task %s init failed (allocate task file path): %s\n", task_name, strerror(errno));
     task_destroy(task);
     return -3;
   }
   task->progress_file = filepath_join(worker->progress_dir, task_name);
   if (!task->progress_file) {
     fprintf(stderr,
-            "retask: task %s initialization failed (allocate progress file path): %s\n",
-            task_name,
-            strerror(errno));
+            "retask: task %s init failed (allocate progress file path): %s\n", task_name, strerror(errno));
     task_destroy(task);
     return -4;
   }
   task->result_file = filepath_join(worker->complete_dir, task_name);
   if (!task->result_file) {
     fprintf(stderr,
-            "retask: task %s initialization failed (allocate result file path): %s\n",
-            task_name,
-            strerror(errno));
+            "retask: task %s init failed (allocate result file path): %s\n", task_name, strerror(errno));
     task_destroy(task);
     return -5;
   }
   task->requeue_file = filepath_join(worker->requeue_dir, task_name);
   if (!task->requeue_file) {
     fprintf(stderr,
-            "retask: task %s initialization failed (allocate requeue file path): %s\n",
-            task_name,
-            strerror(errno));
+            "retask: task %s init failed (allocate requeue file path): %s\n", task_name, strerror(errno));
     task_destroy(task);
     return -6;
   }
