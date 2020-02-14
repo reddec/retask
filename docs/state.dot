@@ -1,0 +1,16 @@
+digraph states {
+    label="States"
+
+    idle;
+    queued;
+    requeue;
+    complete;
+    processing;
+
+    idle->queued [label="task detected"];
+    queued->processing;
+    processing->complete [label="ret code is 0"];
+
+    processing->requeue [label="failed"];
+    requeue->idle [label="expired"];
+}

@@ -1,0 +1,42 @@
+digraph flow {
+    node[shape="rect"];
+
+    begin[shape="oval"];
+    waitNotification [label="wait for updates"];
+    checkTasks [label="get next task file"];
+    hasTasks [label="exists?" shape="diamond"];
+    findExecutable [label="find executable\nin bin dir"];
+    prepareTask [label="prepare IN/OUT files"];
+    runTask [label="run app and pipe\lSTDIN: task file\lSTDOUT: progress file" align="left"]
+    isRetOk [label="succes?" shape="diamond"];
+    requeue[label="move task file\nto requeue dir"];
+    removeProgress[label="remove progress file"]
+    sucessSave [label="move progress file\l to result dir"];
+    successRemove [label="remove task file"];
+    isFound [label="found?" shape="diamond"];
+    isPrepared [label="prepared?" shape="diamond"]
+      
+    complete [label="" shape="point"];
+
+    begin->checkTasks;
+    waitNotification->begin;
+
+    checkTasks->hasTasks;
+    hasTasks->waitNotification [label="no"];
+    hasTasks->findExecutable [label="yes"];
+    findExecutable->isFound;
+    isFound->checkTasks [label="no"];
+    isFound->prepareTask [label="yes"];
+    prepareTask->isPrepared;
+    isPrepared->checkTasks [label="no"];
+    isPrepared->runTask [label="yes"];
+    runTask->isRetOk;
+    isRetOk->requeue[label="no"];
+    requeue->removeProgress->complete;
+
+    isRetOk->sucessSave [label="yes"];
+    sucessSave->successRemove->complete;
+
+
+    complete->checkTasks;
+}
