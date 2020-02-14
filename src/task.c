@@ -11,7 +11,7 @@
 #include <sys/wait.h>
 #include <sys/prctl.h>
 
-int __run_app(const task_t *task, int stdin_file, int stdout_file);
+static int run_app(const task_t *task, int stdin_file, int stdout_file);
 
 int task_init(task_t *task, const worker_t *worker, const char *task_name) {
   char *executable = find_executable(worker->bin_dir);
@@ -79,13 +79,13 @@ int task_run_app(const task_t *task) {
     return 2;
   }
 
-  int ret = __run_app(task, fileno(source), fileno(progress));
+  int ret = run_app(task, fileno(source), fileno(progress));
   fclose(source);
   fclose(progress);
   return ret;
 }
 
-int __run_app(const task_t *task, int stdin_file, int stdout_file) {
+int run_app(const task_t *task, int stdin_file, int stdout_file) {
   pid_t pid = 0;
   pid = fork();
   if (pid == 0) {
