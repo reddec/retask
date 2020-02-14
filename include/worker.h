@@ -24,8 +24,9 @@ typedef struct worker_t {
  * Allocated worker should be destroyed by `worker_destroy`
  * @param worker pointer to worker
  * @param root_dir root directory that will be used as parent for all nested dirs (tasks, progress, ..)
+ * @return 0 on success, otherwise print error to stderr and return related code
  */
-void worker_init(worker_t *worker, const char *root_dir);
+int worker_init(worker_t *worker, const char *root_dir);
 
 /**
  * Free all allocated resource in worker
@@ -82,6 +83,6 @@ int worker_listen(const worker_t *worker, int listener);
  * @param expiration_sec expiration time in seconds
  * @return 0 on success, otherwise print error to stderr and return related code
  */
-int worker_requeue_check(const worker_t *worker, __time_t expiration_sec);
+int worker_requeue_check(const worker_t *worker, long expiration_sec);
 
 #endif //RETASK_WORKER_H

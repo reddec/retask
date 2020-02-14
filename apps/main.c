@@ -6,6 +6,7 @@
 #include <string.h>
 #include <errno.h>
 #include <stdnoreturn.h>
+#include <limits.h>
 #include "worker.h"
 
 static const long DEFAULT_REQUEUE_INTERVAL = 5;
@@ -56,7 +57,7 @@ int launch(worker_t *worker, long requeue_interval) {
   if (fork() == 0) {
     // sub process to manage requeue process
     size_t name_len = strlen(worker->name);
-    char *process_name = (char *) malloc(name_len + 1 + sizeof(REQUEUE_PROCESS));
+    char *process_name = malloc(name_len + 1 + sizeof(REQUEUE_PROCESS));
     memcpy(process_name, worker->name, name_len);
     process_name[name_len] = '/';
     memcpy(&process_name[name_len + 1], REQUEUE_PROCESS, sizeof(REQUEUE_PROCESS));
@@ -89,7 +90,7 @@ int main(int argc, char *argv[]) {
     switch (opt) {
     case 'r': {
       requeue_sec = strtol(optarg, NULL, 10);
-      if (errno == EINVAL || errno == ERANGE) {
+      if ((requeue_sec > 0&& requeue_sec < LONG_MAX) || errno == EINVAL || errno == ERANGE) {
         fprintf(stderr, "invalid value for requeue interval: %s\n", optarg);
         usage();
         exit(EXIT_FAILURE);

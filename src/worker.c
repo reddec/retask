@@ -1,7 +1,9 @@
 //
 // Created by baryshnikov on 10/02/2020.
 //
-
+#include "worker.h"
+#include "task.h"
+#include "utils.h"
 #include <dirent.h>
 #include <stdio.h>
 #include <string.h>
@@ -12,18 +14,53 @@
 #include <unistd.h>
 #include <errno.h>
 #include <stdlib.h>
-#include "task.h"
-#include "utils.h"
 
-void worker_init(worker_t *worker, const char *root_dir) {
+int worker_init(worker_t *worker, const char *root_dir) {
   char *bin_dir = filepath_join(root_dir, "app");
+  memset(worker, 0, sizeof(*worker));
   worker->root = strdup(root_dir);
+  if (!worker->root) {
+    fprintf(stderr, "retask: worker init failed (root path): %s\n", strerror(errno));
+    worker_destroy(worker);
+    return -1;
+  }
   worker->name = strdup(filepath_basename(root_dir));
+  if (!worker->name) {
+    fprintf(stderr, "retask: worker init failed (name): %s\n", strerror(errno));
+    worker_destroy(worker);
+    return -2;
+  }
   worker->bin_dir = bin_dir;
+  if (!worker->bin_dir) {
+    fprintf(stderr, "retask: worker %s init failed (bin dir path): %s\n", worker->name, strerror(errno));
+    worker_destroy(worker);
+    return -3;
+  }
   worker->progress_dir = filepath_join(worker->root, "progress");
+  if (!worker->progress_dir) {
+    fprintf(stderr, "retask: worker %s init failed (progress dir path): %s\n", worker->name, strerror(errno));
+    worker_destroy(worker);
+    return -4;
+  }
   worker->requeue_dir = filepath_join(worker->root, "requeue");
+  if (!worker->requeue_dir) {
+    fprintf(stderr, "retask: worker %s init failed (requeue dir path): %s\n", worker->name, strerror(errno));
+    worker_destroy(worker);
+    return -5;
+  }
   worker->tasks_dir = filepath_join(worker->root, "tasks");
+  if (!worker->tasks_dir) {
+    fprintf(stderr, "retask: worker %s init failed (tasks dir path): %s\n", worker->name, strerror(errno));
+    worker_destroy(worker);
+    return -6;
+  }
   worker->complete_dir = filepath_join(worker->root, "complete");
+  if (!worker->complete_dir) {
+    fprintf(stderr, "retask: worker %s init failed (complete dir path): %s\n", worker->name, strerror(errno));
+    worker_destroy(worker);
+    return -7;
+  }
+  return 0;
 }
 
 void worker_destroy(worker_t *worker) {
@@ -73,6 +110,7 @@ int worker_create_dirs(const worker_t *worker) {
 
 int worker_clean_progress(const worker_t *worker) {
   DIR *dp;
+  int status = 0;
   struct dirent *ep;
   dp = opendir(worker->progress_dir);
   if (!dp) {
@@ -84,6 +122,11 @@ int worker_clean_progress(const worker_t *worker) {
       continue;
     }
     char *path = filepath_join(worker->progress_dir, ep->d_name);
+    if (!path) {
+      fprintf(stderr, "retask: allocate progress file path to remove: %s\n", strerror(errno));
+      status = -1;
+      break;
+    }
     int ret = remove(path);
     if (ret != 0) {
       fprintf(stderr, "retask: remove progress file %s: %s\n", path, strerror(errno));
@@ -91,7 +134,7 @@ int worker_clean_progress(const worker_t *worker) {
     free(path);
   }
   closedir(dp);
-  return 0;
+  return status;
 }
 
 int worker_prepare(const worker_t *worker) {
@@ -181,11 +224,12 @@ int worker_listen(const worker_t *worker, int listener) {
   return 0;
 }
 
-int worker_requeue_check(const worker_t *worker, __time_t expiration_sec) {
+int worker_requeue_check(const worker_t *worker, long expiration_sec) {
   DIR *dp;
   struct dirent *ep;
   struct stat info;
   struct timeval now;
+  int status = 0;
   int ret = gettimeofday(&now, NULL);
   if (ret != 0) {
     fprintf(stderr, "retask: get current date/time: %s\n", strerror(errno));
@@ -202,17 +246,30 @@ int worker_requeue_check(const worker_t *worker, __time_t expiration_sec) {
       continue;
     }
     char *src = filepath_join(worker->requeue_dir, ep->d_name);
-
+    if (!src) {
+      fprintf(stderr, "retask: allocate src path for task %s in requeue dir: %s\n", ep->d_name, strerror(errno));
+      status = -1;
+      break;
+    }
+    char *dst = filepath_join(worker->tasks_dir, ep->d_name);
+    if (!dst) {
+      free(src);
+      fprintf(stderr, "retask: allocate dest path for task %s in requeue dir: %s\n", ep->d_name, strerror(errno));
+      status = -2;
+      break;
+    }
     ret = stat(src, &info);
     if (ret != 0) {
       fprintf(stderr, "retask: stat queued file %s: %s\n", src, strerror(errno));
       free(src);
+      free(dst);
       continue;
     }
     if (info.st_ctim.tv_sec + expiration_sec > now.tv_sec) {
+      free(src);
+      free(dst);
       continue;
     }
-    char *dst = filepath_join(worker->tasks_dir, ep->d_name);
     ret = rename(src, dst);
     if (ret != 0) {
       fprintf(stderr, "retask: failed move queued file %s to tasks %s: %s\n", src, dst, strerror(errno));
@@ -223,5 +280,5 @@ int worker_requeue_check(const worker_t *worker, __time_t expiration_sec) {
     free(src);
   }
   closedir(dp);
-  return 0;
+  return status;
 }

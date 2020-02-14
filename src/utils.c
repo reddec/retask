@@ -1,14 +1,13 @@
 //
 // Created by baryshnikov on 10/02/2020.
 //
-
+#include "utils.h"
 #include <dirent.h>
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <errno.h>
-#include "utils.h"
 
 char *find_executable(const char *bin_dir) {
   DIR *dirp;
@@ -27,6 +26,10 @@ char *find_executable(const char *bin_dir) {
       continue;
     }
     char *path = filepath_join(bin_dir, direntp->d_name);
+    if (!path) {
+      fprintf(stderr, "retask: failed find executable in %s (allocate file path): %s\n", bin_dir, strerror(errno));
+      return NULL;
+    }
     if (access(path, X_OK) != -1) {
       closedir(dirp);
       return path;
@@ -47,7 +50,10 @@ char *filepath_join(const char *root_dir, const char *child) {
     ++n;
     need_slash = 1;
   }
-  char *data = (char *) malloc(n);
+  char *data = malloc(n);
+  if (!data) {
+    return NULL;
+  }
   memcpy(data, root_dir, root_len);
   if (need_slash) {
     data[root_len] = '/';
