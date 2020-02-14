@@ -1,3 +1,7 @@
+# ReTask 
+
+It is a very light task-processing systems with zero dependency for Linux systems. 
+
 ## Architecture 
 
 * Worker - is a entity that is processing one-by-one tasks for the same processor.
