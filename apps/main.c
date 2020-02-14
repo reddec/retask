@@ -58,6 +58,11 @@ int launch(worker_t *worker, long requeue_interval) {
     // sub process to manage requeue process
     size_t name_len = strlen(worker->name);
     char *process_name = malloc(name_len + 1 + sizeof(REQUEUE_PROCESS));
+    if (!process_name) {
+      fprintf(stderr, "retask: launch failed (allocate process name): %s\n", strerror(errno));
+      worker_destroy(worker);
+      return -1;
+    }
     memcpy(process_name, worker->name, name_len);
     process_name[name_len] = '/';
     memcpy(&process_name[name_len + 1], REQUEUE_PROCESS, sizeof(REQUEUE_PROCESS));
@@ -77,8 +82,8 @@ void usage() {
   fprintf(stderr, "Author: Baryshnikov Aleksandr <owner@reddec.net>\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "retask [flags]\n");
-  fprintf(stderr, "    -c <directory> [default=.]  use specified directory as work dir\n");
-  fprintf(stderr, "    -r <seconds>   [default=%li]  interval for requeue\n", DEFAULT_REQUEUE_INTERVAL);
+  fprintf(stderr, "    -c <directory> Use specified directory as work dir. Default: %s\n", DEFAULT_LOCATION);
+  fprintf(stderr, "    -r <seconds>   Interval for requeue. Default: %li\n", DEFAULT_REQUEUE_INTERVAL);
 }
 
 int main(int argc, char *argv[]) {
