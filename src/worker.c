@@ -19,46 +19,18 @@ int worker_init(worker_t *worker, const char *root_dir) {
   char *bin_dir = filepath_join(root_dir, "app");
   memset(worker, 0, sizeof(*worker));
   worker->root = strdup(root_dir);
-  if (!worker->root) {
-    fprintf(stderr, "retask: worker init failed (root path): %s\n", strerror(errno));
+  worker->name = strdup(filepath_basename(root_dir));
+  worker->bin_dir = bin_dir;
+  worker->progress_dir = filepath_join(worker->root, "progress");
+  worker->requeue_dir = filepath_join(worker->root, "requeue");
+  worker->tasks_dir = filepath_join(worker->root, "tasks");
+  worker->complete_dir = filepath_join(worker->root, "complete");
+  if (!worker->root || !worker->name || !worker->bin_dir ||
+      !worker->progress_dir || !worker->requeue_dir ||
+      !worker->tasks_dir || !worker->complete_dir) {
+    fprintf(stderr, "retask: memory allocation failed for worker: %s\n", strerror(errno));
     worker_destroy(worker);
     return -1;
-  }
-  worker->name = strdup(filepath_basename(root_dir));
-  if (!worker->name) {
-    fprintf(stderr, "retask: worker init failed (name): %s\n", strerror(errno));
-    worker_destroy(worker);
-    return -2;
-  }
-  worker->bin_dir = bin_dir;
-  if (!worker->bin_dir) {
-    fprintf(stderr, "retask: worker %s init failed (bin dir path): %s\n", worker->name, strerror(errno));
-    worker_destroy(worker);
-    return -3;
-  }
-  worker->progress_dir = filepath_join(worker->root, "progress");
-  if (!worker->progress_dir) {
-    fprintf(stderr, "retask: worker %s init failed (progress dir path): %s\n", worker->name, strerror(errno));
-    worker_destroy(worker);
-    return -4;
-  }
-  worker->requeue_dir = filepath_join(worker->root, "requeue");
-  if (!worker->requeue_dir) {
-    fprintf(stderr, "retask: worker %s init failed (requeue dir path): %s\n", worker->name, strerror(errno));
-    worker_destroy(worker);
-    return -5;
-  }
-  worker->tasks_dir = filepath_join(worker->root, "tasks");
-  if (!worker->tasks_dir) {
-    fprintf(stderr, "retask: worker %s init failed (tasks dir path): %s\n", worker->name, strerror(errno));
-    worker_destroy(worker);
-    return -6;
-  }
-  worker->complete_dir = filepath_join(worker->root, "complete");
-  if (!worker->complete_dir) {
-    fprintf(stderr, "retask: worker %s init failed (complete dir path): %s\n", worker->name, strerror(errno));
-    worker_destroy(worker);
-    return -7;
   }
   return 0;
 }

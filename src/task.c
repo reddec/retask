@@ -20,34 +20,14 @@ int task_init(task_t *task, const worker_t *worker, const char *task_name) {
   }
   memset(task, 0, sizeof(*task));
   task->name = strdup(task_name);
-  if (!task->name) {
-    fprintf(stderr, "retask: task %s init failed (allocate name): %s\n", task_name, strerror(errno));
+  task->file = filepath_join(worker->tasks_dir, task_name);
+  task->progress_file = filepath_join(worker->progress_dir, task_name);
+  task->result_file = filepath_join(worker->complete_dir, task_name);
+  task->requeue_file = filepath_join(worker->requeue_dir, task_name);
+  if (!task->name || !task->file || !task->progress_file || !task->result_file || !task->requeue_file) {
+    fprintf(stderr, "retask: memory allocation failed for task %s: %s\n", task_name, strerror(errno));
     task_destroy(task);
     return -2;
-  }
-  task->file = filepath_join(worker->tasks_dir, task_name);
-  if (!task->file) {
-    fprintf(stderr, "retask: task %s init failed (allocate task file path): %s\n", task_name, strerror(errno));
-    task_destroy(task);
-    return -3;
-  }
-  task->progress_file = filepath_join(worker->progress_dir, task_name);
-  if (!task->progress_file) {
-    fprintf(stderr, "retask: task %s init failed (allocate progress file path): %s\n", task_name, strerror(errno));
-    task_destroy(task);
-    return -4;
-  }
-  task->result_file = filepath_join(worker->complete_dir, task_name);
-  if (!task->result_file) {
-    fprintf(stderr, "retask: task %s init failed (allocate result file path): %s\n", task_name, strerror(errno));
-    task_destroy(task);
-    return -5;
-  }
-  task->requeue_file = filepath_join(worker->requeue_dir, task_name);
-  if (!task->requeue_file) {
-    fprintf(stderr, "retask: task %s init failed (allocate requeue file path): %s\n", task_name, strerror(errno));
-    task_destroy(task);
-    return -6;
   }
   task->executable = executable;
   task->worker = worker;
