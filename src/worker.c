@@ -16,11 +16,10 @@
 #include <stdlib.h>
 
 int worker_init(worker_t *worker, const char *root_dir) {
-  char *bin_dir = filepath_join(root_dir, "app");
   memset(worker, 0, sizeof(*worker));
   worker->root = strdup(root_dir);
   worker->name = strdup(filepath_basename(root_dir));
-  worker->bin_dir = bin_dir;
+  worker->bin_dir = filepath_join(root_dir, "app");
   worker->progress_dir = filepath_join(worker->root, "progress");
   worker->requeue_dir = filepath_join(worker->root, "requeue");
   worker->tasks_dir = filepath_join(worker->root, "tasks");
