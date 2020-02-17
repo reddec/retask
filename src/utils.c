@@ -42,6 +42,12 @@ char *find_executable(const char *bin_dir) {
 }
 
 char *filepath_join(const char *root_dir, const char *child) {
+  if (!root_dir) {
+    return NULL;
+  }
+  if (!child) {
+    return strdup(root_dir);
+  }
   size_t child_len = strlen(child);
   size_t root_len = strlen(root_dir);
   size_t n = root_len + child_len + 1;
